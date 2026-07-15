@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://freeqr.salt-light.site/sitemap.xml
