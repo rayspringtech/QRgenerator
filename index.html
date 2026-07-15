@@ -164,6 +164,12 @@
 
       --ease:cubic-bezier(.22,.61,.36,1);
 
+      /* Bottom-nav height (0 on desktop — the bar is phone-only) and the offset every
+         bottom-anchored layer (toast, install banner) must clear. Both are re-declared
+         in the <=600px block, so no layer has to know the bar exists. */
+      --botnav-h:0px;
+      --bottom-gap:max(16px,env(safe-area-inset-bottom));
+
       /* Focus ring — opaque, separated from control by page bg (WCAG 2.4.11) */
       --ring-c:#22d3ee;
       --ring:0 0 0 2px var(--bg), 0 0 0 4px var(--ring-c);
@@ -226,6 +232,7 @@
       background:var(--bg);color:var(--text);
       min-height:100vh;min-height:100dvh;
       position:relative;
+      padding-bottom:var(--botnav-h);
       -webkit-font-smoothing:antialiased;
       text-rendering:optimizeLegibility;
       transition:background .3s,color .3s;
@@ -281,7 +288,9 @@
     a:focus-visible,input:focus-visible{box-shadow:var(--ring)}
 
     /* ===== NAV ===== */
-    nav{
+    /* Scoped to .topnav on purpose: a bare nav{} selector also hits the bottom bar and
+       the footer's link nav, leaking sticky/top:0 onto both. */
+    .topnav{
       display:flex;align-items:center;justify-content:space-between;
       padding:12px 20px;
       background:var(--card);
@@ -744,7 +753,7 @@
 
     /* ===== TOAST (download feedback) ===== */
     .toast{
-      position:fixed;left:50%;bottom:max(24px,env(safe-area-inset-bottom));
+      position:fixed;left:50%;bottom:var(--bottom-gap);
       transform:translateX(-50%) translateY(20px);
       background:color-mix(in srgb,var(--card2) 90%, transparent);
       -webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);
@@ -760,7 +769,7 @@
 
     /* ===== PWA INSTALL BANNER ===== */
     .install-banner{
-      position:fixed;left:50%;bottom:max(16px,env(safe-area-inset-bottom));
+      position:fixed;left:50%;bottom:var(--bottom-gap);
       transform:translateX(-50%) translateY(150%);
       width:calc(100% - 28px);max-width:440px;
       display:flex;align-items:center;gap:12px;
@@ -854,6 +863,142 @@
     }
     .install-help-note:empty{display:none}
 
+    /* Bottom-nav jump targets must clear the sticky top nav */
+    #generator,#howto,#faq{scroll-margin-top:76px}
+
+    /* ===== MOBILE BOTTOM NAV (phones only — desktop keeps the top nav) ===== */
+    .botnav{
+      display:none;
+      position:fixed;left:0;right:0;bottom:0;z-index:900;
+      padding:6px 8px env(safe-area-inset-bottom);
+      background:color-mix(in srgb,var(--card) 80%, transparent);
+      -webkit-backdrop-filter:blur(20px) saturate(140%);
+      backdrop-filter:blur(20px) saturate(140%);
+      border-top:1px solid var(--border);
+    }
+    .botnav-in{display:flex;align-items:stretch;gap:2px;max-width:520px;margin:0 auto}
+    .botnav-i{
+      flex:1;min-width:0;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+      min-height:52px;padding:6px 2px;
+      border:none;background:transparent;border-radius:var(--radius-xs);
+      color:var(--text2);font-family:inherit;font-size:10.5px;font-weight:600;
+      letter-spacing:-.01em;line-height:1;text-decoration:none;cursor:pointer;
+      -webkit-tap-highlight-color:transparent;
+      transition:color .2s var(--ease),background .2s var(--ease);
+    }
+    .botnav-i svg{width:22px;height:22px;flex-shrink:0;transition:transform .2s var(--ease)}
+    .botnav-i span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+    .botnav-i.active{
+      color:var(--accent-soft);
+      background:color-mix(in srgb,var(--accent) 10%, transparent);
+    }
+    .botnav-i.active svg{transform:translateY(-1px)}
+    .botnav-i:active{background:var(--card2)}
+
+    /* ===== SHARE SHEET ===== */
+    .share-btn{
+      width:40px;height:40px;border-radius:var(--radius-xs);border:1px solid var(--border);
+      background:transparent;color:var(--text);cursor:pointer;
+      display:flex;align-items:center;justify-content:center;
+      transition:background .2s var(--ease),border-color .2s var(--ease);
+    }
+    .share-btn:hover{background:var(--card2);border-color:color-mix(in srgb,var(--accent) 40%,var(--border))}
+    .share-btn svg{width:18px;height:18px}
+    .share-sheet{
+      position:fixed;inset:0;z-index:1200;
+      display:flex;align-items:flex-end;justify-content:center;
+      padding:16px;padding-bottom:max(16px,env(safe-area-inset-bottom));
+      background:rgba(3,6,14,.62);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);
+      opacity:0;visibility:hidden;pointer-events:none;
+      transition:opacity .25s var(--ease),visibility .25s var(--ease);
+    }
+    .share-sheet.show{opacity:1;visibility:visible;pointer-events:auto}
+    .share-card{
+      width:100%;max-width:440px;position:relative;
+      background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+      padding:22px 20px 20px;box-shadow:0 24px 60px -20px #000;
+      transform:translateY(18px);transition:transform .3s var(--ease);
+    }
+    .share-sheet.show .share-card{transform:translateY(0)}
+    @media(min-width:601px){ .share-sheet{align-items:center} }
+    .share-x{
+      position:absolute;top:12px;right:12px;width:36px;height:36px;
+      display:flex;align-items:center;justify-content:center;
+      border:1px solid var(--border);border-radius:var(--radius-xs);
+      background:transparent;color:var(--text2);cursor:pointer;
+    }
+    .share-x:hover{background:var(--card2);color:var(--text)}
+    .share-x svg{width:16px;height:16px}
+    .share-card h3{font-size:18px;font-weight:800;letter-spacing:-.02em;margin-bottom:4px}
+    .share-lead{font-size:13.5px;color:var(--text2);margin-bottom:16px;line-height:1.45}
+    /* Primary action — shares the generated PNG itself through the OS share sheet.
+       JS shows it only when the platform can actually share files. */
+    .share-img{
+      display:none;width:100%;min-height:50px;align-items:center;justify-content:center;gap:9px;
+      margin-bottom:16px;padding:0 16px;border:none;border-radius:var(--radius-xs);
+      background:var(--grad-cta);color:#fff;
+      font-family:inherit;font-size:14.5px;font-weight:700;letter-spacing:-.01em;
+      text-shadow:0 1px 2px rgba(0,0,0,.35);cursor:pointer;
+      box-shadow:0 6px 18px -6px var(--glow-1);
+      transition:filter .2s var(--ease),transform .2s var(--ease);
+    }
+    .share-img.on{display:flex}
+    .share-img:hover{filter:brightness(1.05);transform:translateY(-1px)}
+    .share-img svg{width:18px;height:18px;flex-shrink:0}
+    .share-sep{
+      display:flex;align-items:center;gap:10px;margin-bottom:14px;
+      font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--text2);
+    }
+    .share-sep::before,.share-sep::after{content:"";flex:1;height:1px;background:var(--border)}
+    .share-sep:not(.on){display:none}
+    .share-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+    .share-i{
+      display:flex;flex-direction:column;align-items:center;gap:7px;
+      padding:12px 4px;min-height:78px;justify-content:center;
+      border:1px solid var(--border);border-radius:var(--radius-sm);
+      background:var(--card2);color:var(--text2);
+      font-family:inherit;font-size:11px;font-weight:600;line-height:1.1;letter-spacing:-.01em;
+      text-align:center;text-decoration:none;cursor:pointer;
+      -webkit-tap-highlight-color:transparent;
+      transition:transform .2s var(--ease),border-color .2s var(--ease),background .2s var(--ease);
+    }
+    .share-i:hover{
+      transform:translateY(-2px);
+      background:var(--card);
+      border-color:color-mix(in srgb,var(--accent) 40%,var(--border));
+    }
+    .share-i:active{transform:none}
+    /* Brand mark sits in its own tinted disc so each logo reads at 20px */
+    .share-ico{
+      width:38px;height:38px;border-radius:var(--radius-pill);flex-shrink:0;
+      display:flex;align-items:center;justify-content:center;
+      background:color-mix(in srgb,var(--brand,var(--accent)) 14%, transparent);
+      color:var(--brand,var(--accent));
+    }
+    .share-ico svg{width:20px;height:20px}
+    .share-i span{color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+    /* Official brand hues, lightened where needed so they hold up on the dark card */
+    .s-fb{--brand:#0866FF}
+    .s-x{--brand:#111827}
+    [data-theme="dark"] .s-x{--brand:#E8EDF5}
+    .s-wa{--brand:#25D366}
+    [data-theme="light"] .s-wa{--brand:#128C4A}
+    .s-tg{--brand:#26A5E4}
+    [data-theme="light"] .s-tg{--brand:#1785BD}
+    .s-in{--brand:#0A66C2}
+    .s-mail{--brand:#8B95A8}
+    [data-theme="light"] .s-mail{--brand:#5C6675}
+    .s-copy{--brand:#22d3ee}
+    [data-theme="light"] .s-copy{--brand:#0E7C93}
+    .s-more{--brand:#8b5cf6}
+    [data-theme="light"] .s-more{--brand:#6D28D9}
+    .s-more:not(.on){display:none}
+    @media(max-width:340px){
+      .share-grid{gap:6px}
+      .share-i{min-height:72px;font-size:10px}
+    }
+
     /* ===== REDUCED MOTION ===== */
     @media (prefers-reduced-motion: reduce){
       *{animation:none!important;transition-duration:.01ms!important}
@@ -881,7 +1026,17 @@
     }
 
     @media(max-width:600px){
-      nav{padding:12px 16px}
+      /* Phone-only bottom bar. Re-declaring these two here is what keeps the toast,
+         the install banner and the page bottom clear of it. */
+      :root{
+        --botnav-h:calc(64px + env(safe-area-inset-bottom));
+        --bottom-gap:calc(var(--botnav-h) + 12px);
+      }
+      .botnav{display:block}
+      /* Share lives in the bottom bar on phones, so drop it from the crowded top nav */
+      .share-btn{display:none}
+
+      .topnav{padding:12px 16px}
       .logo{font-size:16px}.logo svg{width:24px;height:24px}
       /* Tap targets ≥44px on mobile */
       .theme-btn{width:44px;height:44px}
@@ -949,12 +1104,15 @@
 <div class="spotlight" id="spotlight" aria-hidden="true"></div>
 
 <!-- NAV -->
-<nav>
+<nav class="topnav">
   <a href="/" class="logo" aria-label="QR Studio Home">
     <svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><rect width="32" height="32" rx="7" fill="url(#lg)"/><rect x="4" y="4" width="10" height="10" rx="2" fill="none" stroke="#fff" stroke-width="1.8"/><rect x="6.5" y="6.5" width="5" height="5" rx="1" fill="#fff"/><rect x="18" y="4" width="10" height="10" rx="2" fill="none" stroke="#fff" stroke-width="1.8"/><rect x="20.5" y="6.5" width="5" height="5" rx="1" fill="#fff"/><rect x="4" y="18" width="10" height="10" rx="2" fill="none" stroke="#fff" stroke-width="1.8"/><rect x="6.5" y="20.5" width="5" height="5" rx="1" fill="#fff"/><rect x="18" y="18" width="4" height="4" rx=".5" fill="#fff"/><rect x="24" y="18" width="4" height="4" rx=".5" fill="#fff"/><rect x="18" y="24" width="4" height="4" rx=".5" fill="#fff"/><rect x="24" y="24" width="4" height="4" rx=".5" fill="#fff"/><defs><linearGradient id="lg" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#22d3ee"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient></defs></svg>
     <span>QR Studio</span>
   </a>
   <div class="nav-r">
+    <button class="share-btn" onclick="openShare()" aria-label="Share" title="Share">
+      <svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/></svg>
+    </button>
     <button class="theme-btn" onclick="toggleTheme()" aria-label="Toggle theme">
       <span class="t-sun">&#9728;&#65039;</span><span class="t-moon">&#9790;&#65039;</span>
     </button>
@@ -1114,7 +1272,7 @@
   </div>
 
   <!-- ==================== HOW TO USE ==================== -->
-  <div class="sec-title">
+  <div class="sec-title" id="howto">
     <h2 data-en-html="How to Create a <b>QR Code</b>" data-zh-html="如何创建<b>二维码</b>">How to Create a <b>QR Code</b></h2>
     <p data-en="3 simple steps, takes less than 30 seconds" data-zh="3 个简单步骤，不到 30 秒">3 simple steps, takes less than 30 seconds</p>
   </div>
@@ -1191,7 +1349,7 @@
   </div>
 
   <!-- ==================== FAQ ==================== -->
-  <div class="sec-title">
+  <div class="sec-title" id="faq">
     <h2 data-en-html="Frequently Asked <b>Questions</b>" data-zh-html="常见<b>问题</b>">Frequently Asked <b>Questions</b></h2>
   </div>
 
@@ -1260,6 +1418,85 @@
     <a href="https://freeqr.salt-light.site/" data-en="QR Code Maker" data-zh="二维码制作">QR Code Maker</a>
   </nav>
 </footer>
+
+<!-- MOBILE BOTTOM NAV (phones only; CSS shows it at <=600px).
+     The three section links work with JS off — the active state is progressive enhancement. -->
+<nav class="botnav" id="botnav" aria-label="Mobile navigation">
+  <div class="botnav-in">
+    <a class="botnav-i active" href="#generator" data-sec="generator">
+      <svg fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 14h3v3h-3zM19.5 14H21v3M14 19.5h3V21M19.5 19.5H21V21"/></svg>
+      <span data-en="Create" data-zh="生成">Create</span>
+    </a>
+    <a class="botnav-i" href="#howto" data-sec="howto">
+      <svg fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6.5C10.5 5 8.5 4.5 6 4.5A2.5 2.5 0 0 0 3.5 7v10A2.5 2.5 0 0 0 6 19.5c2.5 0 4.5.5 6 2 1.5-1.5 3.5-2 6-2a2.5 2.5 0 0 0 2.5-2.5V7A2.5 2.5 0 0 0 18 4.5c-2.5 0-4.5.5-6 2z"/><path d="M12 6.5v15"/></svg>
+      <span data-en="How to" data-zh="教程">How to</span>
+    </a>
+    <a class="botnav-i" href="#faq" data-sec="faq">
+      <svg fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.4 9.2a2.7 2.7 0 0 1 5.2.9c0 1.8-2.6 2.4-2.6 4"/><path d="M12 17.2h.01"/></svg>
+      <span data-en="FAQ" data-zh="问答">FAQ</span>
+    </a>
+    <button type="button" class="botnav-i" onclick="openShare()">
+      <svg fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/></svg>
+      <span data-en="Share" data-zh="分享">Share</span>
+    </button>
+  </div>
+</nav>
+
+<!-- SHARE SHEET — shares the generated PNG via the OS sheet (mobile), or the page link
+     out to social platforms. Brand icons are inline so nothing hits the network. -->
+<div class="share-sheet" id="shareSheet" role="dialog" aria-modal="true" aria-labelledby="shareTitle">
+  <div class="share-card">
+    <button type="button" class="share-x" id="shareClose" aria-label="Close">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
+    </button>
+    <h3 id="shareTitle" data-en="Share" data-zh="分享">Share</h3>
+    <p class="share-lead"
+       data-en="Send your QR code to anyone, or share the free generator."
+       data-zh="把二维码发给任何人，或分享这个免费生成器。">Send your QR code to anyone, or share the free generator.</p>
+
+    <button type="button" class="share-img" id="shareImg">
+      <svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 16l4.586-4.586a2 2 0 0 1 2.828 0L16 16"/><path d="M14 14l1.586-1.586a2 2 0 0 1 2.828 0L20 14"/><path d="M14 8h.01"/><path d="M6 20h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z"/></svg>
+      <span data-en="Share QR code image" data-zh="分享二维码图片">Share QR code image</span>
+    </button>
+
+    <div class="share-sep" id="shareSep"><span data-en="Share the link" data-zh="分享链接">Share the link</span></div>
+
+    <div class="share-grid">
+      <a class="share-i s-fb" data-net="facebook" target="_blank" rel="noopener noreferrer">
+        <span class="share-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036 26.805 26.805 0 0 0-.733-.009c-.707 0-1.259.096-1.675.309a1.686 1.686 0 0 0-.679.622c-.258.42-.374.995-.374 1.752v1.297h3.919l-.386 2.103-.287 1.564h-3.246v8.245C19.396 23.238 24 18.179 24 12.044c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.628 3.874 10.35 9.101 11.647Z"/></svg></span>
+        <span>Facebook</span>
+      </a>
+      <a class="share-i s-x" data-net="x" target="_blank" rel="noopener noreferrer">
+        <span class="share-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></svg></span>
+        <span>X</span>
+      </a>
+      <a class="share-i s-wa" data-net="whatsapp" target="_blank" rel="noopener noreferrer">
+        <span class="share-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg></span>
+        <span>WhatsApp</span>
+      </a>
+      <a class="share-i s-tg" data-net="telegram" target="_blank" rel="noopener noreferrer">
+        <span class="share-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg></span>
+        <span>Telegram</span>
+      </a>
+      <a class="share-i s-in" data-net="linkedin" target="_blank" rel="noopener noreferrer">
+        <span class="share-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></span>
+        <span>LinkedIn</span>
+      </a>
+      <a class="share-i s-mail" data-net="email">
+        <span class="share-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4.5" width="19" height="15" rx="2.5"/><path d="M3 7l9 6 9-6"/></svg></span>
+        <span data-en="Email" data-zh="邮件">Email</span>
+      </a>
+      <button type="button" class="share-i s-copy" id="shareCopy">
+        <span class="share-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2.5"/><path d="M5.5 15H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v.5"/></svg></span>
+        <span data-en="Copy link" data-zh="复制链接">Copy link</span>
+      </button>
+      <button type="button" class="share-i s-more" id="shareMore">
+        <span class="share-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></span>
+        <span data-en="More" data-zh="更多">More</span>
+      </button>
+    </div>
+  </div>
+</div>
 
 <!-- PWA install prompt (appears on any installable browser — desktop Chromium/Edge and
      Android, plus iOS Safari's manual instructions; dismissible) -->
@@ -1628,7 +1865,7 @@ function showToast(msg){
   // download confirmation isn't hidden behind the (higher z-index) banner.
   const ib=document.getElementById("installBanner");
   if(ib&&ib.classList.contains("show")){
-    t.style.bottom="calc(max(16px,env(safe-area-inset-bottom)) + "+(ib.offsetHeight+12)+"px)";
+    t.style.bottom="calc(var(--bottom-gap) + "+(ib.offsetHeight+12)+"px)";
   }else{
     t.style.bottom="";
   }
@@ -1698,6 +1935,140 @@ async function downloadQRCode(){
   saveToDownloads(dataUrl,fileName);
   showToast(currentLang==="zh"?"已保存到「下载」文件夹 ✓":"Saved to your Downloads folder ✓");
 }
+
+/* ===== SHARE ===== */
+const shareSheet=document.getElementById("shareSheet");
+const shareImgBtn=document.getElementById("shareImg");
+const shareSep=document.getElementById("shareSep");
+const shareMoreBtn=document.getElementById("shareMore");
+
+/* Share the canonical marketing URL, not location.href — that keeps ?utm=, #faq and
+   localhost out of every link people post. */
+function shareUrl(){
+  const c=document.querySelector('link[rel="canonical"]');
+  return (c&&c.href)||location.href.split("#")[0];
+}
+function shareText(){
+  return currentLang==="zh"
+    ?"QR Studio — 免费二维码生成器，自定义颜色、圆角、边框和 Logo，无需注册。"
+    :"QR Studio — free QR code generator with custom colors, rounded corners, borders and a center logo. No signup.";
+}
+function hasQR(){return !!(qrTarget.querySelector("canvas")||qrTarget.querySelector("img"))}
+
+/* Can this browser put a PNG into the OS share sheet? Feature-detected with a real
+   File — Safari/Chrome disagree on what canShare() accepts without one. */
+function canShareFiles(){
+  try{
+    if(!navigator.canShare) return false;
+    return navigator.canShare({files:[new File([new Uint8Array([0])],"t.png",{type:"image/png"})]});
+  }catch(e){return false}
+}
+
+function buildShareLinks(){
+  const u=encodeURIComponent(shareUrl());
+  const t=encodeURIComponent(shareText());
+  const links={
+    facebook:"https://www.facebook.com/sharer/sharer.php?u="+u,
+    x:"https://twitter.com/intent/tweet?url="+u+"&text="+t,
+    whatsapp:"https://api.whatsapp.com/send?text="+t+"%20"+u,
+    telegram:"https://t.me/share/url?url="+u+"&text="+t,
+    linkedin:"https://www.linkedin.com/sharing/share-offsite/?url="+u,
+    email:"mailto:?subject="+encodeURIComponent(currentLang==="zh"?"免费二维码生成器":"Free QR Code Generator")+"&body="+t+"%0A%0A"+u
+  };
+  document.querySelectorAll(".share-i[data-net]").forEach(a=>{
+    const href=links[a.getAttribute("data-net")];
+    if(href) a.href=href;
+  });
+}
+
+function openShare(){
+  buildShareLinks();
+  // Offering "share the image" with no image generated would just be a dead button.
+  const canImg=hasQR()&&canShareFiles();
+  shareImgBtn.classList.toggle("on",canImg);
+  shareSep.classList.toggle("on",canImg);
+  shareMoreBtn.classList.toggle("on",!!navigator.share);
+  shareSheet.classList.add("show");
+  document.body.style.overflow="hidden";
+}
+function closeShare(){
+  shareSheet.classList.remove("show");
+  document.body.style.overflow="";
+}
+document.getElementById("shareClose").addEventListener("click",closeShare);
+shareSheet.addEventListener("click",e=>{if(e.target===shareSheet) closeShare()});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&shareSheet.classList.contains("show")) closeShare()});
+// Link-outs close the sheet so the user isn't left staring at it on return
+document.querySelectorAll(".share-i[data-net]").forEach(a=>a.addEventListener("click",()=>setTimeout(closeShare,120)));
+
+shareImgBtn.addEventListener("click",async()=>{
+  const canvas=qrTarget.querySelector("canvas");
+  const img=qrTarget.querySelector("img");
+  const dataUrl=canvas?canvas.toDataURL("image/png"):(img?img.src:"");
+  if(!dataUrl){showToast(currentLang==="zh"?"请先生成二维码":"Generate a QR code first");return}
+  try{
+    const file=dataURLtoFile(dataUrl,"qrcode.png");
+    await navigator.share({
+      files:[file],
+      title:currentLang==="zh"?"二维码":"QR Code",
+      text:shareText()
+    });
+    closeShare();
+  }catch(err){
+    if(err&&err.name==="AbortError") return; // user dismissed the OS sheet
+    showToast(currentLang==="zh"?"分享失败，请改用「下载 PNG」":"Share failed — use Download PNG instead");
+  }
+});
+
+shareMoreBtn.addEventListener("click",async()=>{
+  try{
+    await navigator.share({title:"QR Studio",text:shareText(),url:shareUrl()});
+    closeShare();
+  }catch(err){
+    if(err&&err.name==="AbortError") return;
+  }
+});
+
+document.getElementById("shareCopy").addEventListener("click",async()=>{
+  const url=shareUrl();
+  try{
+    await navigator.clipboard.writeText(url);
+  }catch(e){
+    // clipboard API needs a secure context — fall back to the old execCommand path
+    const ta=document.createElement("textarea");
+    ta.value=url;ta.setAttribute("readonly","");
+    ta.style.cssText="position:fixed;top:-1000px;opacity:0";
+    document.body.appendChild(ta);ta.select();
+    try{document.execCommand("copy")}catch(e2){}
+    ta.remove();
+  }
+  showToast(currentLang==="zh"?"链接已复制 ✓":"Link copied ✓");
+  closeShare();
+});
+
+/* ===== BOTTOM NAV — active section highlight ===== */
+(function(){
+  const items=Array.from(document.querySelectorAll(".botnav-i[data-sec]"));
+  if(!items.length||!("IntersectionObserver" in window)) return;
+  const secs=items.map(i=>document.getElementById(i.getAttribute("data-sec"))).filter(Boolean);
+  const seen=new Map();
+  function paint(){
+    // Topmost section currently on screen wins; nothing visible → the tool (page top)
+    let best=null,bestTop=Infinity;
+    seen.forEach((rect,id)=>{if(rect&&rect.top<bestTop){bestTop=rect.top;best=id}});
+    items.forEach(i=>i.classList.toggle("active",i.getAttribute("data-sec")===(best||"generator")));
+  }
+  const io=new IntersectionObserver(entries=>{
+    entries.forEach(e=>seen.set(e.target.id,e.isIntersecting?e.boundingClientRect:null));
+    paint();
+  },{rootMargin:"-88px 0px -55% 0px",threshold:0});
+  secs.forEach(s=>io.observe(s));
+  // Tapping "Create" should land you on the input, ready to type
+  const gen=items.find(i=>i.getAttribute("data-sec")==="generator");
+  if(gen) gen.addEventListener("click",()=>{
+    if(!isMobileDevice()) input.focus(); // avoid yanking the phone keyboard open mid-scroll
+  });
+})();
 
 input.addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key==="Enter"){e.preventDefault();generateQRCode()}});
 logoInput.addEventListener("change",e=>loadLogo(e.target.files[0]));
